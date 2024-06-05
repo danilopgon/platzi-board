@@ -1,14 +1,16 @@
-import { fromEvent, map } from "rxjs";
+import { fromEvent, map, mergeAll } from "rxjs";
 
 const canvas = document.querySelector("#reactive-canvas");
 
-const cursorPosition = {x: 0, y: 0}
+const cursorPosition = { x: 0, y: 0 };
+
+const updateCursorPosition = (event) => {
+  cursorPosition.x = event.clientX - canvas.offsetLeft;
+  cursorPosition.y = event.clientY - canvas.offsetTop;
+};
 
 const onMouseDown$ = fromEvent(canvas, "mousedown").pipe(
-  map((event) => {
-    cursorPosition.x = event.clientX - canvas.offsetLeft;
-    cursorPosition.y = event.clientY - canvas.offsetTop;    
-  })
+  map(updateCursorPosition)
 );
 const onMouseMove$ = fromEvent(canvas, "mousemove");
 const onMouseUp$ = fromEvent(canvas, "mouseup");
@@ -19,8 +21,18 @@ const canvasContext = canvas.getContext("2d");
 canvasContext.lineWidth = 8;
 canvasContext.strokeStyle = "white";
 
-canvasContext.beginPath();
-canvasContext.moveTo(100, 130);
-canvasContext.lineTo(200, 230);
-canvasContext.stroke();
-canvasContext.closePath();
+const paintStroke = (event) => {
+  canvasContext.beginPath();
+  canvasContext.moveTo(cursorPosition.x, cursorPosition.y);
+  updateCursorPosition(event);
+  canvasContext.lineTo(cursorPosition.x, cursorPosition.y);
+  canvasContext.stroke();
+  canvasContext.closePath();
+};
+
+const startPaint$ = onMouseDown$.pipe(
+  map(() => onMouseMove$),
+  mergeAll()
+);
+
+startPaint$.subscribe(paintStroke);
