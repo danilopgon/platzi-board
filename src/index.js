@@ -7,10 +7,7 @@ const cursorPosition = {x: 0, y: 0}
 const onMouseDown$ = fromEvent(canvas, "mousedown").pipe(
   map((event) => {
     cursorPosition.x = event.clientX - canvas.offsetLeft;
-    cursorPosition.y = event.clientY - canvas.offsetTop;
-
-    console.log(cursorPosition)
-    
+    cursorPosition.y = event.clientY - canvas.offsetTop;    
   })
 );
 const onMouseMove$ = fromEvent(canvas, "mousemove");
