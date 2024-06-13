@@ -1,6 +1,7 @@
-import { fromEvent, map, mergeAll, takeUntil } from "rxjs";
+import { fromEvent, map, merge, mergeAll, takeUntil } from "rxjs";
 
 const canvas = document.querySelector("#reactive-canvas");
+const restartButton = document.querySelector("#restart-button");
 
 const cursorPosition = { x: 0, y: 0 };
 
@@ -15,7 +16,7 @@ const onMouseDown$ = fromEvent(canvas, "mousedown").pipe(
 const onMouseUp$ = fromEvent(canvas, "mouseup");
 const onMouseMove$ = fromEvent(canvas, "mousemove").pipe(takeUntil(onMouseUp$));
 
-onMouseDown$.subscribe();
+let onMouseMoveSubscription = onMouseDown$.subscribe();
 
 const canvasContext = canvas.getContext("2d");
 canvasContext.lineWidth = 8;
@@ -37,4 +38,17 @@ const startPaint$ = onMouseDown$.pipe(
   mergeAll()
 );
 
-startPaint$.subscribe(paintStroke);
+let startPaintSubscription = startPaint$.subscribe(paintStroke);
+
+const onLoad$ = fromEvent(window, "load");
+const onRestart$ = fromEvent(restartButton, "click");
+
+const clearCanvas$ = merge(onLoad$, onRestart$);
+
+clearCanvas$.subscribe(() => {
+  startPaintSubscription.unsubscribe();
+  onMouseMoveSubscription.unsubscribe();
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  startPaintSubscription = startPaint$.subscribe(paintStroke);
+  onMouseMoveSubscription = onMouseDown$.subscribe();
+});
